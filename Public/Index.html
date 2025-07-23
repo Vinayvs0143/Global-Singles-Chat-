@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Global Singles Chat</title>
+  <style>/* Include your existing CSS here (same as before) */</style>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+  <!-- (Use your existing HTML here – UI remains unchanged) -->
+  <header> … </header>
+  <main>
+    <div class="chat-container"> … </div>
+  </main>
+  <footer> … </footer>
+
+  <script>
+    // Frontend JS (modified):
+    const socket = io();
+    let currentRoom = null;
+    const input = document.getElementById('message-input');
+    let typingTimer;
+
+    socket.on('matched', () => {
+      currentRoom = true;
+      addMessage("✅ You are now connected to a stranger.", false);
+    });
+
+    socket.on('message', ({ text }) => {
+      hideTypingIndicator();
+      addMessage(text, true);
+    });
+
+    socket.on('typing', showTypingIndicator);
+    socket.on('stop_typing', hideTypingIndicator);
+    socket.on('partner_disconnected', () => {
+      addMessage("⚠️ Your chat partner disconnected.", false);
+    });
+
+    input.addEventListener('input', () => {
+      socket.emit('typing', {});
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => socket.emit('stop_typing', {}), 1000);
+    });
+
+    function sendMessage() {
+      const text = input.value.trim();
+      if (!text || !currentRoom) return;
+      addMessage(text, false);
+      socket.emit('message', { text });
+      input.value = '';
+    }
+
+    document.getElementById('send-btn').addEventListener('click', sendMessage);
+    input.addEventListener('keypress', e => e.key==='Enter' && sendMessage());
+    document.getElementById('randomize-btn').addEventListener('click', () => {
+      location.reload();
+    });
+    // Place your existing helper funcs: addMessage, show/hide typing, update user info...
+    // (Copy those from your provided code)
+  </script>
+</body>
+  </html>
